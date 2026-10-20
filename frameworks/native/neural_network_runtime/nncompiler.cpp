@@ -600,6 +600,7 @@ OH_NN_ReturnCode NNCompiler::SaveToCacheFile() const
 
     compiledCache.SetModelName(m_extensionConfig.modelName);
     compiledCache.SetIsExceedRamLimit(m_extensionConfig.isExceedRamLimit);
+    compiledCache.SetModelSize(m_modelSize);
     ret = compiledCache.Save(caches, m_cachePath, m_cacheVersion, m_liteGraphModelId);
     if (ret != OH_NN_SUCCESS) {
         LOGE("[NNCompiler] SaveToCacheFile failed, error happened when saving model cache.");
@@ -1109,6 +1110,7 @@ size_t NNCompiler::GetModelSizeFromModel(InnerModel* innerModel)
         modelSize +=  (tensorSize * DataTypeSize(dtype));
     }
 
+    m_modelSize = modelSize;
     LOGD("GetModelSizeFromModel, modelSize: %{public}zu.", modelSize);
     return modelSize;
 }
@@ -1169,17 +1171,19 @@ size_t NNCompiler::GetModelSizeFromCache(std::string& path, const std::string& m
             LOGE("[GetModelSizeFromCache] checkCacheInfo JSON parse error.");
             return 0;
         }
-
         // parse the JSON string
         nlohmann::json j = nlohmann::json::parse(content);
-
-        int64_t isExceedRamLimit = -1;
-        if (j["data"].find("isExceedRamLimit") == j["data"].end()) {
-            LOGW("[GetModelSizeFromCache] checkCacheInfo read cache isExceedRamLimit failed.");
+        if ((j["data"].find("modelSize") != j["data"].end()) && (j["data"]["modelSize"].is_number())) {
+            modelSize = j["data"]["modelSize"].get<size_t>();
+        } else {
+            int64_t isExceedRamLimit = -1;
+            if (j["data"].find("isExceedRamLimit") == j["data"].end()) {
+                LOGW("[GetModelSizeFromCache] checkCacheInfo read cache isExceedRamLimit failed.");
+                return 0;
+            }
+            isExceedRamLimit = j["data"]["isExceedRamLimit"].get<int64_t>();
+            modelSize = isExceedRamLimit == 1 ? MORE_MODEL_MAX_LIMIT : MODEL_MAX_LIMIT;
         }
-
-        isExceedRamLimit = j["data"]["isExceedRamLimit"].get<int64_t>();
-        modelSize = isExceedRamLimit == 1 ? MORE_MODEL_MAX_LIMIT : MODEL_MAX_LIMIT;
     } else {
         modelSize = GetModelSizeFromFile(path);
     }

@@ -139,7 +139,12 @@ OH_NN_ReturnCode GetNnrtModelId(Compilation* compilationImpl)
             return OH_NN_INVALID_PARAMETER;
         }
 
-        compilationImpl->nnrtModelID = compilationImpl->compiler->GetOnlineModelID();
+        if (compilationImpl->compiler->IsOnlineModel()) {
+            compilationImpl->nnrtModelID = compilationImpl->compiler->GetOnlineModelID();
+        } else {
+            compilationImpl->nnrtModelID = std::hash<std::string>{}(compilationImpl->cachePath);
+        }
+
         return OH_NN_SUCCESS;
     }
 

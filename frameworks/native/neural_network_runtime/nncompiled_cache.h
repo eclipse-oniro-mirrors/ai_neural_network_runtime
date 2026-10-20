@@ -45,6 +45,7 @@ struct NNCompiledCacheInfo {
     int64_t opVersion{0};
     int64_t isExceedRamLimit{0};
     size_t liteGraphModelId{0};
+    size_t modelSize{0};
 };
 
 // 按 cacheDir + modelName 粒度的全局缓存锁，跨编译单元共享
@@ -67,6 +68,7 @@ public:
     OH_NN_ReturnCode SetBackend(size_t backendID);
     void SetModelName(const std::string& modelName);
     void SetIsExceedRamLimit(const bool isExceedRamLimit);
+    void SetModelSize(const size_t modelSize);
     OH_NN_ReturnCode WriteCacheInfo(uint32_t cacheSize,
                                     nlohmann::json& cacheInfo,
                                     const std::string& cacheDir) const;
@@ -97,6 +99,7 @@ private:
     std::string m_modelName;
     std::shared_ptr<Device> m_device {nullptr};
     bool m_isExceedRamLimit {false};
+    size_t m_modelSize {0};
 };
 
 } // namespace NeuralNetworkRuntime
