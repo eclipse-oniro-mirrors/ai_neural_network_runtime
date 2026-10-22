@@ -195,6 +195,11 @@ void NNCompiledCache::SetIsExceedRamLimit(const bool isExceedRamLimit)
     m_isExceedRamLimit = isExceedRamLimit;
 }
 
+void NNCompiledCache::SetModelSize(const size_t modelSize)
+{
+    m_modelSize = modelSize;
+}
+
 OH_NN_ReturnCode NNCompiledCache::GenerateCacheFiles(const std::vector<OHOS::NeuralNetworkRuntime::Buffer>& caches,
                                                      const std::string& cacheDir,
                                                      uint32_t version,
@@ -283,6 +288,7 @@ OH_NN_ReturnCode NNCompiledCache::GenerateCacheModel(const std::vector<OHOS::Neu
     cacheInfo["data"]["opVersion"] = currentOpVersion;
 
     cacheInfo["data"]["isExceedRamLimit"] = m_isExceedRamLimit ? 1 : 0;
+    cacheInfo["data"]["modelSize"] = m_modelSize;
 
     const size_t dataLength = cacheInfo["data"].dump().length();
     char cacheInfoData[dataLength + 1];
@@ -439,6 +445,12 @@ OH_NN_ReturnCode NNCompiledCache::CheckCacheInfoExtension(NNCompiledCacheInfo& m
         return OH_NN_INVALID_FILE;
     } else {
         modelCacheInfo.isExceedRamLimit = j["data"]["isExceedRamLimit"].get<int64_t>();
+    }
+
+    if ((j["data"].find("modelSize") == j["data"].end()) || (!j["data"]["modelSize"].is_number())) {
+        LOGW("[NNCompiledCache] CheckCacheInfo read modelSize from cache info file failed.");
+    } else {
+        modelCacheInfo.modelSize = j["data"]["modelSize"].get<size_t>();
     }
 
     return OH_NN_SUCCESS;

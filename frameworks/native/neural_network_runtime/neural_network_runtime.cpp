@@ -638,6 +638,16 @@ OH_NN_ReturnCode CheckCacheFileExtension(const std::string& content, int64_t& fi
         return OH_NN_INVALID_FILE;
     }
 
+    if (j["data"].find("liteGraphModelId") == j["data"].end()) {
+        LOGE("OH_NNModel_HasCache read liteGraphModelId from cache info file failed.");
+        return OH_NN_INVALID_FILE;
+    }
+
+    if (j["data"].find("modelSize") == j["data"].end()) {
+        LOGE("OH_NNModel_HasCache read modelSize from cache info file failed.");
+        return OH_NN_INVALID_FILE;
+    }
+
     return OH_NN_SUCCESS;
 }
 

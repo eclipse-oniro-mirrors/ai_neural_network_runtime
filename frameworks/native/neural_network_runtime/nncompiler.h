@@ -105,6 +105,7 @@ private:
     std::vector<std::pair<std::shared_ptr<TensorDesc>, OH_NN_TensorType>> m_outputTensorDescs;
     ExtensionConfig m_extensionConfig;
     size_t m_liteGraphModelId {0};
+    size_t m_modelSize {0};
 };
 } // NeuralNetworkRuntime
 } // OHOS
