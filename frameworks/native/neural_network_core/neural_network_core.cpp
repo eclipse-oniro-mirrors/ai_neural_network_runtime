@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <future>
 #include <thread>
-#include <openssl/sha.h>
+#include <crypt_eal_md.h>
 #include <unistd.h>
 #include <fstream>
 
@@ -52,21 +52,48 @@ constexpr size_t OFFLINE_MODEL_SIZE_DIVISOR_SMALL = 100000;
 constexpr size_t OFFLINE_MODEL_SIZE_DIVISOR_LARGE = 1000000;
 
 namespace {
+constexpr uint32_t SHA256_DIGEST_LENGTH = 32;
+constexpr int32_t CRYPT_SUCCESS = 0;
 std::string Sha256(const std::vector<void*>& dataList, const std::vector<size_t>& sizeList, bool isUpper)
 {
     unsigned char hash[SHA256_DIGEST_LENGTH * TWO + END] = "";
 
-    SHA256_CTX ctx;
-    SHA256_Init(&ctx);
-    for (size_t index = 0; index < dataList.size(); ++index) {
-        SHA256_Update(&ctx, dataList[index], sizeList[index]);
+    CRYPT_EAL_MdCTX* mdCtx = CRYPT_EAL_MdNewCtx(CRYPT_MD_SHA256);
+    if (mdCtx == nullptr) {
+        LOGE("Sha256 failed, fail to create md context.");
+        return "";
     }
-    SHA256_Final(&hash[SHA256_DIGEST_LENGTH], &ctx);
+
+    int32_t ret = CRYPT_EAL_MdInit(mdCtx);
+    if (ret != CRYPT_SUCCESS) {
+        LOGE("Sha256 failed, fail to init md context.");
+        CRYPT_EAL_MdFreeCtx(mdCtx);
+        return "";
+    }
+
+    for (size_t index = 0; index < dataList.size(); ++index) {
+        ret = CRYPT_EAL_MdUpdate(mdCtx, static_cast<const uint8_t*>(dataList[index]),
+            static_cast<uint32_t>(sizeList[index]));
+        if (ret != CRYPT_SUCCESS) {
+            LOGE("Sha256 failed, fail to update md.");
+            CRYPT_EAL_MdFreeCtx(mdCtx);
+            return "";
+        }
+    }
+
+    uint32_t mdSize = SHA256_DIGEST_LENGTH;
+    ret = CRYPT_EAL_MdFinal(mdCtx, &hash[SHA256_DIGEST_LENGTH], &mdSize);
+    if (ret != CRYPT_SUCCESS) {
+        LOGE("Sha256 failed, fail to final md.");
+        CRYPT_EAL_MdFreeCtx(mdCtx);
+        return "";
+    }
+    CRYPT_EAL_MdFreeCtx(mdCtx);
 
     // here we translate sha256 hash to hexadecimal.
     // each 8-bit char will be presented by two characters([0-9a-f])
     const char* hexCode = isUpper ? "0123456789ABCDEF" : "0123456789abcdef";
-    for (int32_t i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+    for (int32_t i = 0; i < static_cast<int32_t>(SHA256_DIGEST_LENGTH); ++i) {
         unsigned char value = hash[SHA256_DIGEST_LENGTH + i];
         // uint8_t is 2 digits in hexadecimal.
         hash[i * TWO] = hexCode[(value >> WIDTH) & MASK];

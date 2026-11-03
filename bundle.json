@@ -35,7 +35,7 @@
                 "json",
                 "jsoncpp",
                 "eventhandler",
-                "openssl"
+                "openhitls"
             ],
             "third_party": []
         },
