@@ -22,6 +22,7 @@ ohos_prebuilt_shared_library("mindspore_demo") {
 }
 
 ohos_shared_library("libnnrt_device_service_1.0") {
+  branch_protector_ret = "pac_ret"
   include_dirs = [
     "include",
     "../mindspore",
@@ -52,6 +53,7 @@ ohos_shared_library("libnnrt_device_service_1.0") {
 }
 
 ohos_shared_library("libnnrt_driver") {
+  branch_protector_ret = "pac_ret"
   include_dirs = []
   sources = [ "src/nnrt_device_driver.cpp" ]
   deps = [ ":libnnrt_device_service_1.0" ]
