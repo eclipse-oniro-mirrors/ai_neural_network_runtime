@@ -93,6 +93,7 @@ struct SchedulingInfo {
     bool isModelBuffer;
     size_t nnrtModelId;
     std::string modelType;
+    std::string modelPath;
     std::string modelName;
     std::string nodeName;
 };
