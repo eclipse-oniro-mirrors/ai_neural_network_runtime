@@ -304,6 +304,35 @@ static std::string GetExtConfigValue(const std::unordered_map<std::string, std::
     return std::string(iter->second.data(), iter->second.size());
 }
 
+static SchedulingInfo BuildSchedulingInfo(Compilation* compilationImpl, const std::string& cachePath)
+{
+    bool isOnlineModel = compilationImpl->compiler->IsOnlineModel();
+    bool isModelBuffer = ((compilationImpl->offlineModelBuffer.first != nullptr) &&
+        (compilationImpl->offlineModelBuffer.second != size_t(0))) ||
+        ((compilationImpl->cacheBuffer.first != nullptr) && (compilationImpl->cacheBuffer.second != size_t(0)));
+
+    std::string modelPath = "";
+    if (compilationImpl->offlineModelPath != nullptr) {
+        modelPath = compilationImpl->offlineModelPath;
+    } else if (!isOnlineModel && !cachePath.empty()) {
+        modelPath = cachePath;
+    }
+
+    SchedulingInfo schedulingInfo{};
+    schedulingInfo.hiaiModelId = compilationImpl->hiaiModelId;
+    schedulingInfo.needModelLatency = nullptr;
+    schedulingInfo.cachePath = cachePath.c_str();
+    schedulingInfo.modelSize = compilationImpl->modelSize;
+    schedulingInfo.isModelBuffer = isModelBuffer;
+    schedulingInfo.nnrtModelId = isOnlineModel ?
+        compilationImpl->compiler->GetLiteGraphModelId() : compilationImpl->nnrtModelID;
+    schedulingInfo.modelType = isOnlineModel ? "online" : "offline";
+    schedulingInfo.modelPath = modelPath;
+    schedulingInfo.modelName = GetExtConfigValue(compilationImpl->configs, "ModelName");
+    schedulingInfo.nodeName = GetExtConfigValue(compilationImpl->configs, "NodeName");
+    return schedulingInfo;
+}
+
 OH_NN_ReturnCode ScheduleModel(Compilation* compilationImpl, size_t createExecutorLatency)
 {
     NNRtServiceApi& nnrtService = NNRtServiceApi::GetInstance();
@@ -338,26 +367,13 @@ OH_NN_ReturnCode ScheduleModel(Compilation* compilationImpl, size_t createExecut
         return OH_NN_INVALID_PARAMETER;
     }
 
-    bool isModelBuffer = false;
-    if (((compilationImpl->offlineModelBuffer.first != nullptr) &&
-        (compilationImpl->offlineModelBuffer.second != size_t(0))) ||
-        ((compilationImpl->cacheBuffer.first != nullptr) && (compilationImpl->cacheBuffer.second != size_t(0)))) {
-        isModelBuffer = true;
-    }
-
     if (compilationImpl->compiler == nullptr) {
         return OH_NN_INVALID_PARAMETER;
     }
 
-    bool isOnlineModel = compilationImpl->compiler->IsOnlineModel();
-    std::string modelType = isOnlineModel ? "online" : "offline";
-    size_t modelId = isOnlineModel ? compilationImpl->compiler->GetLiteGraphModelId() : compilationImpl->nnrtModelID;
-
     bool needModelLatency = false;
-    SchedulingInfo schedulingInfo = {compilationImpl->hiaiModelId, &needModelLatency, cachePath.c_str(),
-        compilationImpl->modelSize, isModelBuffer, modelId, modelType,
-        GetExtConfigValue(compilationImpl->configs, "ModelName"),
-        GetExtConfigValue(compilationImpl->configs, "NodeName")};
+    SchedulingInfo schedulingInfo = BuildSchedulingInfo(compilationImpl, cachePath);
+    schedulingInfo.needModelLatency = &needModelLatency;
     ret = nnrtService.Scheduling(schedulingInfo, createExecutorLatency);
     if (ret != static_cast<int>(OH_NN_SUCCESS)) {
         return static_cast<OH_NN_ReturnCode>(ret);
