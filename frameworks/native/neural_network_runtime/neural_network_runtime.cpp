@@ -50,6 +50,7 @@ const std::string EXTENSION_KEY_DYNAMIC_DIMS = "DynamicDims";
 const std::string EXTENSION_KEY_FM_SHARED = "NPU_FM_SHARED";
 const std::string EXTENSION_KEY_AIPP = "AIPP";
 const std::string EXTENSION_KEY_IS_EXCEED_RAMLIMIT = "isExceedRamLimit";
+const std::string EXTENSION_KEY_MODEL_PATH = "ModelPath";
 
 const std::string NULL_HARDWARE_NAME = "default";
 const std::string NNRT_DEVICE_NAME = "const.ai.nnrt_deivce";
@@ -504,6 +505,12 @@ OH_NN_ReturnCode CheckExtensionConfigs(
             ops.assign(singleValue.first, singleValue.first + singleValue.second);
             extensionConfig.opLayout.insert({ops, "hiai::ExecuteDevice::CPU"});
             LOGI("ParseExtensionConfigs opLayout:%{public}s.", ops.c_str());
+        }
+    }
+    if (extensionMap.find(EXTENSION_KEY_MODEL_PATH) != extensionMap.end()) {
+        const std::vector<std::pair<char*, size_t>>& value = extensionMap.at(EXTENSION_KEY_MODEL_PATH);
+        if (!value.empty()) {
+            extensionConfig.modelPath.assign(value[0].first, value[0].first + value[0].second);
         }
     }
     return OH_NN_SUCCESS;

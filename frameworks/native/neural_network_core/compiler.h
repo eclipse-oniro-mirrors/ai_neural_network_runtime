@@ -57,6 +57,10 @@ public:
     {
         return false;
     }
+    virtual std::string GetModelPath()
+    {
+        return "";
+    }
 };
 } // namespace NeuralNetworkRuntime
 } // namespace OHOS

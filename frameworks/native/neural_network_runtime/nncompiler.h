@@ -56,6 +56,7 @@ public:
     size_t GetOnlineModelID() override;
     size_t GetLiteGraphModelId() override;
     bool IsOnlineModel() override;
+    std::string GetModelPath() override;
 
     NNExecutor* CreateExecutor();
 

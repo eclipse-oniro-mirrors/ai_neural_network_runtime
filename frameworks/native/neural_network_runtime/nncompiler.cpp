@@ -37,6 +37,7 @@ constexpr int32_t NUMBER_CACHE_INFO_EXTENSION_MEMBERS = 2;
 const std::string EXTENSION_KEY_MODEL_NAME = "ModelName";
 const std::string EXTENSION_KEY_FM_SHARED = "NPU_FM_SHARED";
 const std::string EXTENSION_KEY_IS_EXCEED_RAMLIMIT = "isExceedRamLimit";
+const std::string EXTENSION_KEY_MODEL_PATH = "ModelPath";
 constexpr size_t INPUT_OUTPUT_MAX_NUM = 200;
 constexpr size_t MORE_MODEL_MAX_LIMIT = 201 * 1024 * 1024; // 201MB
 constexpr size_t MODEL_MAX_LIMIT = 200 * 1024 * 1024; // 200MB
@@ -785,6 +786,12 @@ OH_NN_ReturnCode NNCompiler::SetExtensionConfig(const std::unordered_map<std::st
             m_extensionConfig.isExceedRamLimit = false;
         }
     }
+    if (configs.find(EXTENSION_KEY_MODEL_PATH) != configs.end()) {
+        std::vector<char> value = configs.at(EXTENSION_KEY_MODEL_PATH);
+        if (!value.empty()) {
+            m_extensionConfig.modelPath.assign(value.data(), value.data() + value.size());
+        }
+    }
     return OH_NN_SUCCESS;
 }
 
@@ -1346,6 +1353,11 @@ size_t NNCompiler::GetLiteGraphModelId()
 bool NNCompiler::IsOnlineModel()
 {
     return true;
+}
+
+std::string NNCompiler::GetModelPath()
+{
+    return m_extensionConfig.modelPath;
 }
 } // NeuralNetworkRuntime
 } // OHOS
