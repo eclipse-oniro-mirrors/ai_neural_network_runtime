@@ -60,6 +60,7 @@ struct ExtensionConfig {
     bool isNpuFmShared = false;
     bool isExceedRamLimit = false;
     std::string aippPath;
+    std::string modelPath;
 };
 
 struct ModelConfig {

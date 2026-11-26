@@ -312,9 +312,11 @@ static SchedulingInfo BuildSchedulingInfo(Compilation* compilationImpl, const st
         ((compilationImpl->cacheBuffer.first != nullptr) && (compilationImpl->cacheBuffer.second != size_t(0)));
 
     std::string modelPath = "";
-    if (compilationImpl->offlineModelPath != nullptr) {
+    if (isOnlineModel) {
+        modelPath = compilationImpl->compiler->GetModelPath();
+    } else if (compilationImpl->offlineModelPath != nullptr) {
         modelPath = compilationImpl->offlineModelPath;
-    } else if (!isOnlineModel && !cachePath.empty()) {
+    } else if (!cachePath.empty()) {
         modelPath = cachePath;
     }
 
